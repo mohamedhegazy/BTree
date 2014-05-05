@@ -19,6 +19,7 @@ import diskmgr.InvalidPageNumberException;
 import diskmgr.InvalidRunSizeException;
 import diskmgr.OutOfSpaceException;
 import diskmgr.Page;
+import global.GlobalConst;
 import global.PageId;
 import global.RID;
 import global.SystemDefs;
@@ -36,7 +37,8 @@ public class BTreeFile extends IndexFile {
 			HashEntryNotFoundException, DiskMgrException, FileIOException,
 			InvalidPageNumberException, FileNameTooLongException,
 			InvalidRunSizeException, DuplicateEntryException,
-			OutOfSpaceException {//open the index if it exists or create new one if it doesn't exist
+			OutOfSpaceException {// open the index if it exists or create new
+									// one if it doesn't exist
 		// TODO Auto-generated constructor stub
 		headId = SystemDefs.JavabaseDB.get_file_entry(string);
 		file_name = string;
@@ -48,10 +50,10 @@ public class BTreeFile extends IndexFile {
 			headerPage.setMaxKeySize(i);
 		} else {// index exists
 			headId = SystemDefs.JavabaseDB.get_file_entry(string);
-			headerPage = new BTreeHeaderPage();
-			SystemDefs.JavabaseBM.pinPage(headId, headerPage, false);
+			Page pg=new Page();
+			SystemDefs.JavabaseBM.pinPage(headId, pg, false);
+			headerPage = new BTreeHeaderPage(pg);
 			headerPage.setCurPage(headId);
-
 		}
 
 	}
@@ -62,11 +64,12 @@ public class BTreeFile extends IndexFile {
 			HashOperationException, ReplacerException,
 			HashEntryNotFoundException, InvalidFrameNumberException,
 			PagePinnedException, PageUnpinnedException, PageNotReadException,
-			BufMgrException { //open the index
+			BufMgrException { // open the index
 		// TODO Auto-generated constructor stub
 		headId = SystemDefs.JavabaseDB.get_file_entry(string);
-		headerPage = new BTreeHeaderPage();
-		SystemDefs.JavabaseBM.pinPage(headId, headerPage, false);
+		Page pg=new Page();
+		SystemDefs.JavabaseBM.pinPage(headId, pg, false);
+		headerPage = new BTreeHeaderPage(pg);
 		headerPage.setCurPage(headId);
 		file_name = string;
 	}
@@ -110,7 +113,8 @@ public class BTreeFile extends IndexFile {
 			HashEntryNotFoundException, InvalidFrameNumberException,
 			InsertRecException, HashOperationException, PageNotReadException,
 			BufferPoolExceededException, PagePinnedException, BufMgrException,
-			KeyNotMatchException, NodeNotMatchException, DeleteRecException, ConvertException {
+			KeyNotMatchException, NodeNotMatchException, DeleteRecException,
+			ConvertException {
 		// TODO Auto-generated method stub
 		if (!(key instanceof StringKey) && !(key instanceof IntegerKey)) {// signal
 																			// error
@@ -129,13 +133,13 @@ public class BTreeFile extends IndexFile {
 			return;
 		}
 		KeyDataEntry new_child_entry;
-		if (headerPage.getRootID().pid == -1) {// empty index so the index will
+		if (headerPage.get_rootId().pid == -1) {// empty index so the index will
 												// contain a leaf page
 												// only(which is the root)
-			BTLeafPage root = new BTLeafPage(headerPage.getKeyType());
+			BTLeafPage root = new BTLeafPage(headerPage.get_keyType());
 			PageId temprootId = root.getCurPage();
-			root.setNextPage(new PageId());
-			root.setPrevPage(new PageId());
+			root.setNextPage(new PageId(GlobalConst.INVALID_PAGE));
+			root.setPrevPage(new PageId(GlobalConst.INVALID_PAGE));
 			root.insertRecord(key, rid);
 			SystemDefs.JavabaseBM.unpinPage(temprootId, true);
 			SystemDefs.JavabaseBM.pinPage(headId, headerPage, false);
@@ -143,23 +147,24 @@ public class BTreeFile extends IndexFile {
 			SystemDefs.JavabaseBM.unpinPage(headId, true);
 			return;
 		} else {
-			new_child_entry = insert(key, rid, headerPage.getRootID()); // index
-																		// is
-																		// not
-																		// empty
-			if(new_child_entry!=null){// this means that splitting propagated to the root so we need new root
-				BTIndexPage new_root=new BTIndexPage(headerPage.getKeyType());
-				PageId id_new_root=new_root.getCurPage();
-				new_root.insertKey(new_child_entry.key,((IndexData)new_child_entry.data).getData());
-				new_root.setPrevPage(headerPage.getRootID());
+			new_child_entry = insert(key, rid, headerPage.get_rootId()); // index
+																			// is
+																			// not
+																			// empty
+			if (new_child_entry != null) { // this means that splitting
+											// propagated to the root so we need
+											// new root
+				BTIndexPage new_root = new BTIndexPage(headerPage.get_keyType());
+				PageId id_new_root = new_root.getCurPage();
+				new_root.insertKey(new_child_entry.key,
+						((IndexData) new_child_entry.data).getData());
+				new_root.setPrevPage(headerPage.get_rootId());
 				SystemDefs.JavabaseBM.unpinPage(id_new_root, true);
 				SystemDefs.JavabaseBM.pinPage(headId, headerPage, false);
 				headerPage.setRootID(id_new_root);
 				SystemDefs.JavabaseBM.unpinPage(headId, true);
 			}
-
 		}
-
 	}
 
 	private KeyDataEntry insert(KeyClass key, RID rid, PageId curID)
@@ -180,10 +185,10 @@ public class BTreeFile extends IndexFile {
 		Page page = new Page(); // used as output
 		KeyDataEntry entry;
 		SystemDefs.JavabaseBM.pinPage(curID, page, false);
-		curPage = new BTSortedPage(page, headerPage.getKeyType());
+		curPage = new BTSortedPage(page, headerPage.get_keyType());
 		if (curPage.getType() == NodeType.INDEX) {
 			BTIndexPage curIndex = new BTIndexPage(page,
-					headerPage.getKeyType());
+					headerPage.get_keyType());
 			PageId curPageId = curID, nextPageId = curIndex.getPageNoByKey(key);
 			SystemDefs.JavabaseBM.unpinPage(curPageId, true);
 			entry = insert(key, rid, nextPageId); // recurse to get next page
@@ -191,7 +196,7 @@ public class BTreeFile extends IndexFile {
 				return null; // no splitting happened
 			} else { // splitting occured in lower level
 				SystemDefs.JavabaseBM.pinPage(curPageId, page, false);
-				curIndex = new BTIndexPage(page, headerPage.getKeyType());
+				curIndex = new BTIndexPage(page, headerPage.get_keyType());
 				if (curIndex.available_space() >= BT.getKeyDataLength(key,
 						NodeType.INDEX)) { // in this page no splitting occured
 					curIndex.insertKey(entry.key,
@@ -201,7 +206,7 @@ public class BTreeFile extends IndexFile {
 				} else {// in this page splitting will happen because there is
 						// no enough space
 					BTIndexPage newPage = new BTIndexPage(
-							headerPage.getKeyType());
+							headerPage.get_keyType());
 					PageId temPageId = newPage.getCurPage();
 					KeyDataEntry tempDataEntry = curIndex.getFirst(new RID());
 					// splitting occured and moving
@@ -229,7 +234,7 @@ public class BTreeFile extends IndexFile {
 						tempDataEntry = newPage.getFirst(new RID());
 					}
 					tempDataEntry = newPage.getFirst(new RID());
-					if (BT.keyCompare(entry.key, tempDataEntry.key) >= 0) {// decide
+					if (BT.keyCompare(entry.key, tempDataEntry.key) >= 0) { // decide
 																			// where
 																			// the
 																			// entry
@@ -255,7 +260,10 @@ public class BTreeFile extends IndexFile {
 																				// the
 																				// new
 																				// page
-					newPage.deleteSortedRecord(new RID()); // first record in new page is pushed up to an index page
+					newPage.deleteSortedRecord(new RID()); // first record in
+															// new page is
+															// pushed up to an
+															// index page
 					SystemDefs.JavabaseBM.unpinPage(temPageId, true);
 					((IndexData) entry.data).setData(temPageId);
 					return entry;
@@ -266,7 +274,7 @@ public class BTreeFile extends IndexFile {
 															// recursion which
 															// is the leaf page
 			BTLeafPage curBtLeafPage = new BTLeafPage(page,
-					headerPage.getKeyType());
+					headerPage.get_keyType());
 			PageId curleaf = curID;
 			if (curBtLeafPage.available_space() >= BT.getKeyDataLength(key,
 					NodeType.LEAF)) { // enough space on leaf page so no
@@ -275,44 +283,53 @@ public class BTreeFile extends IndexFile {
 				SystemDefs.JavabaseBM.unpinPage(curleaf, true);
 				return null;
 			} else {// no enough space on leaf so we split it
-				BTLeafPage newLeaf = new BTLeafPage(headerPage.getKeyType());
+				BTLeafPage newLeaf = new BTLeafPage(headerPage.get_keyType());
 				PageId newLeafId = newLeaf.getCurPage();
 				newLeaf.setNextPage(curBtLeafPage.getNextPage());
 				newLeaf.setPrevPage(curleaf);
 				curBtLeafPage.setNextPage(newLeafId);// adjust pointers of the
 														// doubly linked list
 				PageId temp_id = newLeaf.getNextPage();
-				if(temp_id.pid!=-1){// if the new page wasn't the last one
-					//adjust prev page of the next page of the new page
-					BTLeafPage next_to_new=new BTLeafPage(temp_id,headerPage.getKeyType());
+				if (temp_id.pid != -1) {// if the new page wasn't the last one
+					// adjust prev page of the next page of the new page
+					BTLeafPage next_to_new = new BTLeafPage(temp_id,
+							headerPage.get_keyType());
 					next_to_new.setPrevPage(newLeafId);
-					SystemDefs.JavabaseBM.unpinPage(next_to_new.getCurPage(), true);
+					SystemDefs.JavabaseBM.unpinPage(next_to_new.getCurPage(),
+							true);
 				}
-				KeyDataEntry tempDataEntry=curBtLeafPage.getFirst(new RID());
-				while(tempDataEntry!=null){//splitting is done like in the index page
-					newLeaf.insertRecord(tempDataEntry.key, ((LeafData)(tempDataEntry.data)).getData());
+				KeyDataEntry tempDataEntry = curBtLeafPage.getFirst(new RID());
+				while (tempDataEntry != null) {// splitting is done like in the
+												// index page
+					newLeaf.insertRecord(tempDataEntry.key,
+							((LeafData) (tempDataEntry.data)).getData());
 					curBtLeafPage.deleteSortedRecord(new RID());
+					tempDataEntry=curBtLeafPage.getFirst(new RID());
 				}
-				tempDataEntry=newLeaf.getFirst(new RID());
-				while(newLeaf.available_space()<curBtLeafPage.available_space()){
-					curBtLeafPage.insertRecord(tempDataEntry.key, ((LeafData)(tempDataEntry.data)).getData());
+				tempDataEntry = newLeaf.getFirst(new RID());
+				while (newLeaf.available_space() < curBtLeafPage
+						.available_space()) {
+					curBtLeafPage.insertRecord(tempDataEntry.key,
+							((LeafData) (tempDataEntry.data)).getData());
 					newLeaf.deleteSortedRecord(new RID());
+					tempDataEntry=newLeaf.getFirst(new RID());
 				}
-				if(BT.keyCompare(key, tempDataEntry.key)>=0){//decide where the entry belongs
+				if (BT.keyCompare(key, tempDataEntry.key) >= 0) {// decide where
+																	// the entry
+																	// belongs
 					newLeaf.insertRecord(key, rid);
-				}
-				else{
+				} else {
 					curBtLeafPage.insertRecord(key, rid);
 				}
 				SystemDefs.JavabaseBM.unpinPage(curleaf, true);
-				tempDataEntry=newLeaf.getFirst(new RID());
-				entry= new KeyDataEntry(tempDataEntry.key, newLeafId);
+				tempDataEntry = newLeaf.getFirst(new RID());
+				entry = new KeyDataEntry(tempDataEntry.key, newLeafId);
 				SystemDefs.JavabaseBM.unpinPage(newLeafId, true);
 				return entry;
 			}
 
 		}
-			return null;
+		return null;
 	}
 
 	public boolean Delete(KeyClass key, RID rid) {

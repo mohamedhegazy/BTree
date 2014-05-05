@@ -19,12 +19,10 @@ public class BTLeafPage extends BTSortedPage {
 		super(page, keyType);
 		setType(NodeType.LEAF);// set in the HFPage
 	}
-
 	public BTLeafPage(int keyType) throws ConstructPageException, IOException {
 		super(keyType);
 		setType(NodeType.LEAF);// set in the HFPage
 	}
-
 	public KeyDataEntry getCurrent(RID rid) throws KeyNotMatchException,
 			NodeNotMatchException, ConvertException, IOException {
 		rid.slotNo--;
@@ -68,6 +66,7 @@ public class BTLeafPage extends BTSortedPage {
 				deleteSortedRecord(rid);
 				return true;
 			}
+			entry=getNext(rid);
 		}
 		return false;
 	}

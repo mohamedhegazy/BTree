@@ -65,14 +65,11 @@ public class BTIndexPage extends BTSortedPage {
 		}
 		return null;
 	}
-
 	public PageId getLeftLink() throws IOException {
 		return getPrevPage();
 
 	}
-
 	public void setLeftLink(PageId left) throws IOException {
 		setPrevPage(left);
 	}
-
 }

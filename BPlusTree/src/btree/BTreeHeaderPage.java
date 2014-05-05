@@ -36,13 +36,18 @@ public class BTreeHeaderPage extends HFPage { // ////////////Header page
 		init(id, pg);
 	}
 
+	public BTreeHeaderPage(Page pg) {
+		// TODO Auto-generated constructor stub
+		super(pg);//initialize sorted page with pg
+	}
+
 	public void setRootID(PageId root) throws IOException {
 		// TODO Auto-generated method stub
 		setNextPage(root);
 
 	}
 
-	public PageId getRootID() throws IOException {
+	public PageId get_rootId() throws IOException {
 		return getNextPage();
 	}
 
@@ -50,8 +55,9 @@ public class BTreeHeaderPage extends HFPage { // ////////////Header page
 		setSlot(1, type, 0);
 	}
 
-	public int getKeyType() throws IOException {
-		return (int) getSlotLength(1);
+	public short get_keyType() throws IOException {// returns short because
+													// BT.printLeaf wants so
+		return (short) getSlotLength(1);
 
 	}
 
@@ -60,7 +66,7 @@ public class BTreeHeaderPage extends HFPage { // ////////////Header page
 	}
 
 	public int getMaxKeySize() throws IOException {
-		return (int) getSlotLength(2);
+		return getSlotLength(2);
 	}
 
 }
