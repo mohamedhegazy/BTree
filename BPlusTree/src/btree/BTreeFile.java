@@ -251,7 +251,7 @@ public class BTreeFile extends IndexFile {
 						curIndex.insertKey(entry.key,
 								((IndexData) entry.data).getData());
 					}
-					SystemDefs.JavabaseBM.unpinPage(temPageId, true);
+//					SystemDefs.JavabaseBM.unpinPage(temPageId, true);
 					entry = newPage.getFirst(new RID());
 					newPage.setPrevPage(((IndexData) entry.data).getData()); // set
 																				// prev
@@ -260,7 +260,7 @@ public class BTreeFile extends IndexFile {
 																				// the
 																				// new
 																				// page
-					newPage.deleteSortedRecord(new RID()); // first record in
+					newPage.deleteSortedRecord(new RID());  // first record in
 															// new page is
 															// pushed up to an
 															// index page
