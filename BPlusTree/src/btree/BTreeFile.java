@@ -129,8 +129,8 @@ public class BTreeFile extends IndexFile {
 																			// or
 																			// a
 																			// string
-//			System.out.println("Key is not of valid type");
-			throw new KeyNotValidException(null,"Not Valid Key Type");
+																			// System.out.println("Key is not of valid type");
+			throw new KeyNotValidException(null, "Not Valid Key Type");
 		}
 		KeyDataEntry new_child_entry;
 		if (headerPage.get_rootId().pid == -1) {// empty index so the index will
@@ -257,13 +257,16 @@ public class BTreeFile extends IndexFile {
 					}
 					// SystemDefs.JavabaseBM.unpinPage(temPageId, true);
 					entry = newPage.getFirst(new RID());
-					newPage.setPrevPage(((IndexData) entry.data).getData()); // set
-																				// prev
-																				// page
-																				// of
-																				// the
-																				// new
-																				// page
+					newPage.setLeftLink(((IndexData) entry.data).getData());
+					// set
+					// left
+					// link 
+					// of
+					// the
+					// new
+					// page
+					// to the value of next pointer because the first key will
+					// be deleted
 					newPage.deleteSortedRecord(new RID()); // first record in
 															// new page is
 															// pushed up to an

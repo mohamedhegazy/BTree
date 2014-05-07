@@ -5,9 +5,7 @@ import java.io.IOException;
 import diskmgr.Page;
 import global.PageId;
 import global.RID;
-
 public class BTLeafPage extends BTSortedPage {
-
 	public BTLeafPage(PageId arg0, int arg1) throws ConstructPageException,
 			IOException {
 		super(arg0, arg1);
@@ -41,7 +39,6 @@ public class BTLeafPage extends BTSortedPage {
 		}
 		return null;
 	}
-
 	public KeyDataEntry getFirst(RID rid) throws KeyNotMatchException,
 			NodeNotMatchException, ConvertException, IOException {
 		rid.pageNo = getCurPage();
@@ -55,12 +52,10 @@ public class BTLeafPage extends BTSortedPage {
 
 		return null;
 	}
-
 	public RID insertRecord(KeyClass key, RID dataRid)
 			throws InsertRecException {
 		return insertRecord(new KeyDataEntry(key, dataRid));
 	}
-
 	public boolean delEntry(KeyDataEntry dEntry) throws KeyNotMatchException,
 			NodeNotMatchException, ConvertException, IOException,
 			DeleteRecException {
@@ -73,7 +68,6 @@ public class BTLeafPage extends BTSortedPage {
 			}
 			entry = getNext(rid);// a keydata entry is considered as a record in
 									// the page with a specific RID
-
 		}
 		return false;
 	}
