@@ -114,7 +114,7 @@ public class BTreeFile extends IndexFile {
 			InsertRecException, HashOperationException, PageNotReadException,
 			BufferPoolExceededException, PagePinnedException, BufMgrException,
 			KeyNotMatchException, NodeNotMatchException, DeleteRecException,
-			ConvertException {
+			ConvertException, KeyNotValidException {
 		// TODO Auto-generated method stub
 		if (!(key instanceof StringKey) && !(key instanceof IntegerKey)) {// signal
 																			// error
@@ -130,7 +130,7 @@ public class BTreeFile extends IndexFile {
 																			// a
 																			// string
 //			System.out.println("Key is not of valid type");
-			throw new KeyNotMatchException(null,"Not Valid Key Type");
+			throw new KeyNotValidException(null,"Not Valid Key Type");
 		}
 		KeyDataEntry new_child_entry;
 		if (headerPage.get_rootId().pid == -1) {// empty index so the index will
