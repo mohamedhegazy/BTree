@@ -19,10 +19,12 @@ public class BTLeafPage extends BTSortedPage {
 		super(page, keyType);
 		setType(NodeType.LEAF);// set in the HFPage
 	}
+
 	public BTLeafPage(int keyType) throws ConstructPageException, IOException {
 		super(keyType);
 		setType(NodeType.LEAF);// set in the HFPage
 	}
+
 	public KeyDataEntry getCurrent(RID rid) throws KeyNotMatchException,
 			NodeNotMatchException, ConvertException, IOException {
 		rid.slotNo--;
@@ -46,7 +48,9 @@ public class BTLeafPage extends BTSortedPage {
 		rid.slotNo = 0;
 		if (getSlotCnt() != 0) {
 			return BT.getEntryFromBytes(getpage(), getSlotOffset(0),
-					getSlotLength(0), keyType, NodeType.LEAF);
+					getSlotLength(0), keyType, NodeType.LEAF); // slot 0 is the
+																// first slot
+																// with data
 		}
 
 		return null;
@@ -58,7 +62,8 @@ public class BTLeafPage extends BTSortedPage {
 	}
 
 	public boolean delEntry(KeyDataEntry dEntry) throws KeyNotMatchException,
-			NodeNotMatchException, ConvertException, IOException, DeleteRecException {
+			NodeNotMatchException, ConvertException, IOException,
+			DeleteRecException {
 		RID rid = new RID();
 		KeyDataEntry entry = getFirst(rid);
 		while (entry != null) {
@@ -66,9 +71,10 @@ public class BTLeafPage extends BTSortedPage {
 				deleteSortedRecord(rid);
 				return true;
 			}
-			entry=getNext(rid);
+			entry = getNext(rid);// a keydata entry is considered as a record in
+									// the page with a specific RID
+
 		}
 		return false;
 	}
-
 }

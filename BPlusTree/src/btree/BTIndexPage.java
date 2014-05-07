@@ -40,7 +40,8 @@ public class BTIndexPage extends BTSortedPage {
 				return ((IndexData) entry.data).getData();
 			}
 		}
-		return getPrevPage();
+		return getPrevPage();// this means that the key value is less than the
+								// minimum value in the index page
 	}
 
 	public KeyDataEntry getNext(RID rid) throws IOException,
@@ -65,10 +66,12 @@ public class BTIndexPage extends BTSortedPage {
 		}
 		return null;
 	}
+
 	public PageId getLeftLink() throws IOException {
 		return getPrevPage();
 
 	}
+
 	public void setLeftLink(PageId left) throws IOException {
 		setPrevPage(left);
 	}
