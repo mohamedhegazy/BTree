@@ -31,7 +31,7 @@ public class BTIndexPage extends BTSortedPage {
 	public PageId getPageNoByKey(KeyClass key) throws IOException,
 			KeyNotMatchException, NodeNotMatchException, ConvertException {
 		KeyDataEntry entry;
-		for (int i = getSlotCnt() - 1; i >= 0; i++) { // start from last slot in
+		for (int i = getSlotCnt() - 1; i >= 0; i--) { // start from last slot in
 														// byte array and check
 														// the keys
 			entry = BT.getEntryFromBytes(getpage(), getSlotOffset(i),

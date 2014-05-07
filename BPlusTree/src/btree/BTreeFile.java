@@ -208,6 +208,7 @@ public class BTreeFile extends IndexFile {
 					BTIndexPage newPage = new BTIndexPage(
 							headerPage.get_keyType());
 					PageId temPageId = newPage.getCurPage();
+					System.out.println("Index page split and new page id is "+temPageId.pid+" while the old is :"+curPageId.pid);
 					KeyDataEntry tempDataEntry = curIndex.getFirst(new RID());
 					// splitting occured and moving
 					// half of entries from
