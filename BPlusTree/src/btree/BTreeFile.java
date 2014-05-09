@@ -355,9 +355,43 @@ public class BTreeFile extends IndexFile {
 		return null;
 	}
 
-	public boolean Delete(KeyClass key, RID rid) {
+	public boolean Delete(KeyClass key, RID rid) throws IOException,
+			ReplacerException, HashOperationException, PageUnpinnedException,
+			InvalidFrameNumberException, PageNotReadException,
+			BufferPoolExceededException, PagePinnedException, BufMgrException,
+			HashEntryNotFoundException, KeyNotMatchException,
+			NodeNotMatchException, ConvertException, DeleteRecException, ConstructPageException {
 		// TODO Auto-generated method stub
-		return false;
+		if (headerPage.get_rootId().pid == -1)
+			return false;
+		return Delete(headerPage.get_rootId(), key, rid);
+	}
+
+	private boolean Delete(PageId curId, KeyClass key, RID rid)
+			throws ReplacerException, HashOperationException,
+			PageUnpinnedException, InvalidFrameNumberException,
+			PageNotReadException, BufferPoolExceededException,
+			PagePinnedException, BufMgrException, IOException,
+			HashEntryNotFoundException, KeyNotMatchException,
+			NodeNotMatchException, ConvertException, DeleteRecException, ConstructPageException {
+		// TODO Auto-generated method stub
+		BTSortedPage curPage = new BTSortedPage(curId, headerPage.get_keyType());
+		if (curPage.getType() == NodeType.INDEX) {
+			BTIndexPage curIndexPage = new BTIndexPage(curPage,
+					headerPage.get_keyType());
+			PageId nextId = curIndexPage.getPageNoByKey(key);
+			SystemDefs.JavabaseBM.unpinPage(curId, true);
+			boolean del= Delete(nextId, key, rid);
+//			SystemDefs.JavabaseBM.unpinPage(curId, true);
+			return del;
+		} else {
+			BTLeafPage curLeafPage = new BTLeafPage(curPage,
+					headerPage.get_keyType());
+			boolean del = curLeafPage.delEntry(new KeyDataEntry(key, rid));
+			SystemDefs.JavabaseBM.unpinPage(curId, true);
+//			SystemDefs.JavabaseBM.unpinPage(curId, true);
+			return del;
+		}
 	}
 
 	public String getFile_name() {

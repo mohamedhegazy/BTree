@@ -47,6 +47,21 @@ public abstract class IndexFile
    * Delete entry from the index file.
    * @param data the key for the entry
    * @param rid the rid of the tuple with the key
+ * @throws IOException 
+ * @throws ConvertException 
+ * @throws NodeNotMatchException 
+ * @throws KeyNotMatchException 
+ * @throws HashEntryNotFoundException 
+ * @throws BufMgrException 
+ * @throws PagePinnedException 
+ * @throws BufferPoolExceededException 
+ * @throws PageNotReadException 
+ * @throws InvalidFrameNumberException 
+ * @throws PageUnpinnedException 
+ * @throws HashOperationException 
+ * @throws ReplacerException 
+ * @throws DeleteRecException 
+ * @throws ConstructPageException 
    */
-  abstract public boolean Delete(final KeyClass data, final RID rid);
+  abstract public boolean Delete(final KeyClass data, final RID rid) throws IOException, ReplacerException, HashOperationException, PageUnpinnedException, InvalidFrameNumberException, PageNotReadException, BufferPoolExceededException, PagePinnedException, BufMgrException, HashEntryNotFoundException, KeyNotMatchException, NodeNotMatchException, ConvertException, DeleteRecException, ConstructPageException;
 }
