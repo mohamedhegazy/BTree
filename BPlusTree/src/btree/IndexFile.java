@@ -39,8 +39,9 @@ public abstract class IndexFile
  * @throws DeleteRecException 
  * @throws ConvertException 
  * @throws KeyNotValidException 
+ * @throws LongKeyException 
    */
-  abstract public void insert(final KeyClass data, final RID rid) throws IOException, ConstructPageException, ReplacerException, PageUnpinnedException, HashEntryNotFoundException, InvalidFrameNumberException, InsertRecException, HashOperationException, PageNotReadException, BufferPoolExceededException, PagePinnedException, BufMgrException, KeyNotMatchException, NodeNotMatchException, DeleteRecException, ConvertException, KeyNotValidException;
+  abstract public void insert(final KeyClass data, final RID rid) throws IOException, ConstructPageException, ReplacerException, PageUnpinnedException, HashEntryNotFoundException, InvalidFrameNumberException, InsertRecException, HashOperationException, PageNotReadException, BufferPoolExceededException, PagePinnedException, BufMgrException, KeyNotMatchException, NodeNotMatchException, DeleteRecException, ConvertException, KeyNotValidException, LongKeyException;
   
   /**
    * Delete entry from the index file.

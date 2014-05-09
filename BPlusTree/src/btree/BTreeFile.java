@@ -114,7 +114,7 @@ public class BTreeFile extends IndexFile {
 			InsertRecException, HashOperationException, PageNotReadException,
 			BufferPoolExceededException, PagePinnedException, BufMgrException,
 			KeyNotMatchException, NodeNotMatchException, DeleteRecException,
-			ConvertException, KeyNotValidException {
+			ConvertException, KeyNotValidException, LongKeyException {
 		// TODO Auto-generated method stub
 		if (!(key instanceof StringKey) && !(key instanceof IntegerKey)) {// signal
 																			// error
@@ -131,6 +131,12 @@ public class BTreeFile extends IndexFile {
 																			// string
 																			// System.out.println("Key is not of valid type");
 			throw new KeyNotValidException(null, "Not Valid Key Type");
+		}
+		if (BT.getKeyLength(key) > headerPage.getMaxKeySize()) {// signal error
+																// if key is
+																// bigger than
+																// allowed value
+			throw new LongKeyException(null, "Key is bigger than maximum size");
 		}
 		KeyDataEntry new_child_entry;
 		if (headerPage.get_rootId().pid == -1) {// empty index so the index will
@@ -212,30 +218,28 @@ public class BTreeFile extends IndexFile {
 					System.out.println("Index page split and new page id is "
 							+ temPageId.pid + " while the old is :"
 							+ curPageId.pid);
-					KeyDataEntry tempDataEntry = curIndex.getFirst(new RID());
-					// splitting occured and moving
-					// half of entries from
-					// original page to new page
-					while (tempDataEntry != null) {// move all entries to new
-													// page because we can't get
-													// to middle of the original
-													// page and move half of the
-													// entries
+
+					int half = curIndex.numberOfRecords() / 2;
+					int space = newPage.available_space();
+					RID rid2 = new RID();
+					rid2.slotNo = half - 1;
+					rid2.pageNo = curIndex.getCurPage();
+					KeyDataEntry tempDataEntry = curIndex.getNext(rid2);
+					while (tempDataEntry != null
+							&& curIndex.available_space() != space / 2) {// move
+																			// half
+																			// of
+																			// the
+																			// entries
+																			// to
+																			// the
+																			// new
+																			// page
 						newPage.insertKey(tempDataEntry.key,
-								((IndexData) tempDataEntry.data).getData());
-						curIndex.deleteSortedRecord(new RID());
-						tempDataEntry = curIndex.getFirst(new RID());
-					}
-					tempDataEntry = newPage.getFirst(new RID());
-					while (newPage.available_space() < curIndex
-							.available_space()) {// move number of entries from
-													// new page to the original
-													// page from the beginning
-													// so it remains sorted
-						curIndex.insertKey(tempDataEntry.key,
-								((IndexData) tempDataEntry.data).getData());
-						newPage.deleteSortedRecord(new RID());
-						tempDataEntry = newPage.getFirst(new RID());
+								((IndexData) (tempDataEntry.data)).getData());
+						curIndex.deleteSortedRecord(rid2);
+						rid2.slotNo--;
+						tempDataEntry = curIndex.getNext(rid2);
 					}
 					tempDataEntry = newPage.getFirst(new RID());
 					if (BT.keyCompare(entry.key, tempDataEntry.key) >= 0) { // decide
@@ -260,7 +264,7 @@ public class BTreeFile extends IndexFile {
 					newPage.setLeftLink(((IndexData) entry.data).getData());
 					// set
 					// left
-					// link 
+					// link
 					// of
 					// the
 					// new
@@ -305,22 +309,29 @@ public class BTreeFile extends IndexFile {
 					SystemDefs.JavabaseBM.unpinPage(next_to_new.getCurPage(),
 							true);
 				}
-				KeyDataEntry tempDataEntry = curBtLeafPage.getFirst(new RID());
-				while (tempDataEntry != null) {// splitting is done like in the
-												// index page
+				int half = curBtLeafPage.numberOfRecords() / 2;
+				RID rid2 = new RID();
+				rid2.slotNo = half - 1;
+				rid2.pageNo = curBtLeafPage.getCurPage();
+				KeyDataEntry tempDataEntry = curBtLeafPage.getNext(rid2);
+				int space = newLeaf.available_space();
+				while (tempDataEntry != null
+						&& curBtLeafPage.available_space() != space / 2) {// move
+																			// half
+																			// of
+																			// the
+																			// entries
+																			// to
+																			// the
+																			// new
+																			// page
 					newLeaf.insertRecord(tempDataEntry.key,
 							((LeafData) (tempDataEntry.data)).getData());
-					curBtLeafPage.deleteSortedRecord(new RID());
-					tempDataEntry = curBtLeafPage.getFirst(new RID());
+					curBtLeafPage.deleteSortedRecord(rid2);
+					rid2.slotNo--;
+					tempDataEntry = curBtLeafPage.getNext(rid2);
 				}
 				tempDataEntry = newLeaf.getFirst(new RID());
-				while (newLeaf.available_space() < curBtLeafPage
-						.available_space()) {
-					curBtLeafPage.insertRecord(tempDataEntry.key,
-							((LeafData) (tempDataEntry.data)).getData());
-					newLeaf.deleteSortedRecord(new RID());
-					tempDataEntry = newLeaf.getFirst(new RID());
-				}
 				if (BT.keyCompare(key, tempDataEntry.key) >= 0) {// decide where
 																	// the entry
 																	// belongs

@@ -34,7 +34,7 @@ public class BTIndexPage extends BTSortedPage {
 		for (int i = getSlotCnt() - 1; i >= 0; i--) { // start from last slot in
 														// byte array and check
 														// the keys
-			entry = BT.getEntryFromBytes(getpage(), getSlotOffset(i),
+			entry = BT.getEntryFromBytes(getpage(), getSlotOffset(i)/* get offset of i'th slot*/,
 					getSlotLength(i), keyType, NodeType.INDEX);
 			if (BT.keyCompare(key, entry.key) >= 0) {
 				return ((IndexData) entry.data).getData();
