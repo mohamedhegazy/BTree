@@ -62,6 +62,7 @@ public abstract class IndexFile
  * @throws ReplacerException 
  * @throws DeleteRecException 
  * @throws ConstructPageException 
+ * @throws Exception 
    */
-  abstract public boolean Delete(final KeyClass data, final RID rid) throws IOException, ReplacerException, HashOperationException, PageUnpinnedException, InvalidFrameNumberException, PageNotReadException, BufferPoolExceededException, PagePinnedException, BufMgrException, HashEntryNotFoundException, KeyNotMatchException, NodeNotMatchException, ConvertException, DeleteRecException, ConstructPageException;
+  abstract public boolean Delete(final KeyClass data, final RID rid) throws IOException, ReplacerException, HashOperationException, PageUnpinnedException, InvalidFrameNumberException, PageNotReadException, BufferPoolExceededException, PagePinnedException, BufMgrException, HashEntryNotFoundException, KeyNotMatchException, NodeNotMatchException, ConvertException, DeleteRecException, ConstructPageException, Exception;
 }

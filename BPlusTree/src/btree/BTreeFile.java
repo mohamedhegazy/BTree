@@ -226,7 +226,7 @@ public class BTreeFile extends IndexFile {
 					rid2.pageNo = curIndex.getCurPage();
 					KeyDataEntry tempDataEntry = curIndex.getNext(rid2);
 					while (tempDataEntry != null
-							&& curIndex.available_space() != space / 2) {// move
+							&& curIndex.available_space() < space / 2) {// move
 																			// half
 																			// of
 																			// the
@@ -316,7 +316,7 @@ public class BTreeFile extends IndexFile {
 				KeyDataEntry tempDataEntry = curBtLeafPage.getNext(rid2);
 				int space = newLeaf.available_space();
 				while (tempDataEntry != null
-						&& curBtLeafPage.available_space() != space / 2) {// move
+						&& curBtLeafPage.available_space() < space / 2) {// move
 																			// half
 																			// of
 																			// the
@@ -355,12 +355,7 @@ public class BTreeFile extends IndexFile {
 		return null;
 	}
 
-	public boolean Delete(KeyClass key, RID rid) throws IOException,
-			ReplacerException, HashOperationException, PageUnpinnedException,
-			InvalidFrameNumberException, PageNotReadException,
-			BufferPoolExceededException, PagePinnedException, BufMgrException,
-			HashEntryNotFoundException, KeyNotMatchException,
-			NodeNotMatchException, ConvertException, DeleteRecException, ConstructPageException {
+	public boolean Delete(KeyClass key, RID rid) throws Exception {
 		// TODO Auto-generated method stub
 		if (headerPage.get_rootId().pid == -1)
 			return false;
@@ -368,28 +363,21 @@ public class BTreeFile extends IndexFile {
 	}
 
 	private boolean Delete(PageId curId, KeyClass key, RID rid)
-			throws ReplacerException, HashOperationException,
-			PageUnpinnedException, InvalidFrameNumberException,
-			PageNotReadException, BufferPoolExceededException,
-			PagePinnedException, BufMgrException, IOException,
-			HashEntryNotFoundException, KeyNotMatchException,
-			NodeNotMatchException, ConvertException, DeleteRecException, ConstructPageException {
+			throws Exception {
 		// TODO Auto-generated method stub
-		BTSortedPage curPage = new BTSortedPage(curId, headerPage.get_keyType());
+		BTSortedPage curPage = new BTSortedPage(curId, headerPage.get_keyType());//page gets pinned
 		if (curPage.getType() == NodeType.INDEX) {
 			BTIndexPage curIndexPage = new BTIndexPage(curPage,
 					headerPage.get_keyType());
 			PageId nextId = curIndexPage.getPageNoByKey(key);
-			SystemDefs.JavabaseBM.unpinPage(curId, true);
+			SystemDefs.JavabaseBM.unpinPage(curId, true);//page gets unpinned
 			boolean del= Delete(nextId, key, rid);
-//			SystemDefs.JavabaseBM.unpinPage(curId, true);
 			return del;
 		} else {
 			BTLeafPage curLeafPage = new BTLeafPage(curPage,
 					headerPage.get_keyType());
 			boolean del = curLeafPage.delEntry(new KeyDataEntry(key, rid));
-			SystemDefs.JavabaseBM.unpinPage(curId, true);
-//			SystemDefs.JavabaseBM.unpinPage(curId, true);
+			SystemDefs.JavabaseBM.unpinPage(curId, true);//page gets unpinned
 			return del;
 		}
 	}
