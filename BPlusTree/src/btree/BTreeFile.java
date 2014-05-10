@@ -93,14 +93,97 @@ public class BTreeFile extends IndexFile {
 		}
 	}
 
-	public BTFileScan new_scan(KeyClass lowkey, KeyClass hikey) {
+	public BTFileScan new_scan(KeyClass lowkey, KeyClass hikey)
+			throws Exception {
 		// TODO Auto-generated method stub
-		return null;
+		RID rid = new RID();
+		BTLeafPage leafPage = getLeaf(headerPage.get_rootId(), lowkey, rid);
+		BTFileScan scan = new BTFileScan(leafPage, lowkey, hikey,
+				headerPage.getMaxKeySize(), rid, headerPage.get_keyType());
+		return scan;
 	}
 
-	public void destroyFile() {
-		// TODO Auto-generated method stub
+	private BTLeafPage getLeaf(PageId pageid, KeyClass key, RID rid)
+			throws Exception {
+		BTLeafPage leafPage;
+		Page page = new Page();
+		SystemDefs.JavabaseBM.pinPage(pageid, page, false);
+		BTSortedPage curPage = new BTSortedPage(page, headerPage.get_keyType());
 
+		if (curPage.getType() == NodeType.INDEX) {/* index node */
+			SystemDefs.JavabaseBM.unpinPage(curPage.getCurPage(), false);
+
+			BTIndexPage indexPage = new BTIndexPage(page,
+					headerPage.get_keyType());
+			if (key == null) {
+				leafPage = getLeaf(indexPage.getLeftLink(), key, rid);
+			} else {
+				PageId leafPageId = indexPage.getPageNoByKey(key);
+				leafPage = getLeaf(leafPageId, key, rid);
+			}
+
+			// >>>>>>>>>>>>>>>>>>>>>RECURSION
+			// System.out.println(">>ENTER RECURSION");
+			// leafPage = getLeaf(leafPageId, key, rid);
+
+		} else {/* leaf node */
+			// System.out.println(">>REACH LEAF");
+			// SystemDefs.JavabaseBM.unpinPage(pageid, false);
+			leafPage = new BTLeafPage(page, headerPage.get_keyType());
+			// KeyClass entry =
+			leafPage.getFirst(rid);
+			// System.out.println(ok);
+			return leafPage;
+		}
+		// System.out.println(">>RETURN RECURSION");
+		return leafPage;
+
+	}
+
+	public void destroyFile() throws IOException, Exception {
+		// TODO Auto-generated method stub
+		if (headerPage != null) {
+             if(headerPage.get_rootId().pid!=-1)
+			recDestroy(headerPage.get_rootId());
+			// SystemDefs.JavabaseBM.unpinPage(headerPage.get_rootId(), true);
+			// SystemDefs.JavabaseBM.freePage(headerPage.get_rootId());
+			SystemDefs.JavabaseBM.unpinPage(headerPage.getCurPage(), true);
+			SystemDefs.JavabaseBM.freePage(headerPage.getCurPage());
+			headerPage = null;
+			SystemDefs.JavabaseDB.delete_file_entry(file_name);
+		}
+	}
+
+	private void recDestroy(PageId pageid) throws Exception {
+		Page page = new Page();
+		SystemDefs.JavabaseBM.pinPage(pageid, page, false);
+		BTSortedPage curpage = new BTSortedPage(page, headerPage.get_keyType());
+
+		if (curpage.getType() == NodeType.INDEX) {
+			RID rid = new RID();
+			SystemDefs.JavabaseBM.unpinPage(pageid, false);
+			BTIndexPage indexPage = new BTIndexPage(page,
+					headerPage.get_keyType());
+
+			// BTSortedPage nextPage = new BTSortedPage(indexPage.getLeftLink(),
+			// headerPage.get_keyType());
+			KeyDataEntry entry = indexPage.getFirst(rid);
+			recDestroy(indexPage.getLeftLink());
+			// SystemDefs.JavabaseBM.unpinPage(pageid, true);
+			while (entry != null) {
+				PageId nextPageID = ((IndexData) (entry.data)).getData();
+				// nextPage = new BTSortedPage(nextPageID,
+				// headerPage.get_keyType());
+				recDestroy(nextPageID);
+				// SystemDefs.JavabaseBM.unpinPage(nextPage.getCurPage(), true);
+				entry = indexPage.getNext(rid);
+			}
+			// SystemDefs.JavabaseBM.unpinPage(pageid, true);
+			SystemDefs.JavabaseBM.freePage(pageid);
+		} else {
+			SystemDefs.JavabaseBM.unpinPage(pageid, true);
+			SystemDefs.JavabaseBM.freePage(pageid);
+		}
 	}
 
 	public void traceFilename(String string) {
@@ -215,9 +298,9 @@ public class BTreeFile extends IndexFile {
 					BTIndexPage newPage = new BTIndexPage(
 							headerPage.get_keyType());
 					PageId temPageId = newPage.getCurPage();
-					System.out.println("Index page split and new page id is "
-							+ temPageId.pid + " while the old is :"
-							+ curPageId.pid);
+//					System.out.println("Index page split and new page id is "
+//							+ temPageId.pid + " while the old is :"
+//							+ curPageId.pid);
 
 					int half = curIndex.numberOfRecords() / 2;
 					int space = newPage.available_space();
@@ -227,14 +310,14 @@ public class BTreeFile extends IndexFile {
 					KeyDataEntry tempDataEntry = curIndex.getNext(rid2);
 					while (tempDataEntry != null
 							&& curIndex.available_space() < space / 2) {// move
-																			// half
-																			// of
-																			// the
-																			// entries
-																			// to
-																			// the
-																			// new
-																			// page
+																		// half
+																		// of
+																		// the
+																		// entries
+																		// to
+																		// the
+																		// new
+																		// page
 						newPage.insertKey(tempDataEntry.key,
 								((IndexData) (tempDataEntry.data)).getData());
 						curIndex.deleteSortedRecord(rid2);
@@ -290,6 +373,7 @@ public class BTreeFile extends IndexFile {
 			if (curBtLeafPage.available_space() >= BT.getKeyDataLength(key,
 					NodeType.LEAF)) { // enough space on leaf page so no
 										// splitting occurs
+//				System.out.println("key is " + key.toString());
 				curBtLeafPage.insertRecord(key, rid);
 				SystemDefs.JavabaseBM.unpinPage(curleaf, true);
 				return null;
@@ -365,19 +449,21 @@ public class BTreeFile extends IndexFile {
 	private boolean Delete(PageId curId, KeyClass key, RID rid)
 			throws Exception {
 		// TODO Auto-generated method stub
-		BTSortedPage curPage = new BTSortedPage(curId, headerPage.get_keyType());//page gets pinned
+		BTSortedPage curPage = new BTSortedPage(curId, headerPage.get_keyType());// page
+																					// gets
+																					// pinned
 		if (curPage.getType() == NodeType.INDEX) {
 			BTIndexPage curIndexPage = new BTIndexPage(curPage,
 					headerPage.get_keyType());
 			PageId nextId = curIndexPage.getPageNoByKey(key);
-			SystemDefs.JavabaseBM.unpinPage(curId, true);//page gets unpinned
-			boolean del= Delete(nextId, key, rid);
+			SystemDefs.JavabaseBM.unpinPage(curId, true);// page gets unpinned
+			boolean del = Delete(nextId, key, rid);
 			return del;
 		} else {
 			BTLeafPage curLeafPage = new BTLeafPage(curPage,
 					headerPage.get_keyType());
 			boolean del = curLeafPage.delEntry(new KeyDataEntry(key, rid));
-			SystemDefs.JavabaseBM.unpinPage(curId, true);//page gets unpinned
+			SystemDefs.JavabaseBM.unpinPage(curId, true);// page gets unpinned
 			return del;
 		}
 	}

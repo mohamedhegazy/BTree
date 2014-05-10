@@ -53,7 +53,7 @@ public class BTLeafPage extends BTSortedPage {
 		return null;
 	}
 	public RID insertRecord(KeyClass key, RID dataRid)
-			throws InsertRecException {
+			throws InsertRecException, IOException {
 		return insertRecord(new KeyDataEntry(key, dataRid));
 	}
 	public boolean delEntry(KeyDataEntry dEntry) throws KeyNotMatchException,
